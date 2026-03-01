@@ -14,7 +14,7 @@ jobs:
       - name: Determine On-Time Score
         id: setscore
         run: |
-          # Set your deadline in UTC (28-Feb-2026 11:50 PM PKT = 18:50 UTC)
+          # Set your deadline in UTC (28-Feb-2026 12:50 PM PKT = 18:50 UTC)
           DEADLINE_UTC="2026-02-28T18:50:00Z"
 
           # Get the latest commit timestamp in UTC
