@@ -1,0 +1,35 @@
+name: Grading
+on:
+  workflow_dispatch:
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: On-Time Submission
+        id: on-time-submission
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: On-Time Submission
+          command: |
+            DEADLINE_UTC="2026-03-01T09:00:00Z"
+            DEADLINE_SEC=$(date -d "$DEADLINE_UTC" +%s)
+            COMMIT_TIME=$(git log --format=%aI -- . ":(exclude).github" | head -1)
+            if [ -z "$COMMIT_TIME" ]; then exit 1; fi
+            COMMIT_SEC=$(date -d "$COMMIT_TIME" +%s)
+            echo "Commit time : $COMMIT_TIME"
+            echo "Deadline    : $DEADLINE_UTC"
+            if [ "$COMMIT_SEC" -le "$DEADLINE_SEC" ]; then exit 0; else exit 1; fi
+          timeout: 5
+          max-score: 10
+
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          ON-TIME-SUBMISSION_RESULTS: ${{ steps.on-time-submission.outputs.result }}
+        with:
+          runners: on-time-submission
