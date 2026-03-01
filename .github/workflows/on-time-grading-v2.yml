@@ -1,1 +1,47 @@
+name: On-Time Submission Grading
 
+on:
+  workflow_dispatch:
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    outputs:
+      score: ${{ steps.setscore.outputs.score }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine On-Time Score
+        id: setscore
+        run: |
+          # Set your deadline in UTC (28-Feb-2026 12:50 PM PKT = 18:50 UTC)
+          DEADLINE_UTC="2026-02-28T18:50:00Z"
+
+          # Get the latest commit timestamp in UTC
+          COMMIT_TIME=$(git log -1 --format=%cI)
+
+          # If no commits, assign 0
+          if [ -z "$COMMIT_TIME" ]; then
+            echo "score=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Convert both times to seconds since epoch
+          DEADLINE_SEC=$(date -d "$DEADLINE_UTC" +%s)
+          COMMIT_SEC=$(date -d "$COMMIT_TIME" +%s)
+
+          # Compare commit time with deadline
+          if [ "$COMMIT_SEC" -le "$DEADLINE_SEC" ]; then
+            echo "score=10" >> $GITHUB_OUTPUT
+          else
+            echo "score=0" >> $GITHUB_OUTPUT
+          fi
+
+  report:
+    needs: grade
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report grade to Classroom
+        uses: classroom-resources/autograding-grading-reporter@v1
+        with:
+          runners: grade
